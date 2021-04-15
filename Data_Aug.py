@@ -3,33 +3,38 @@ import numpy as np
 import cv2
 import imutils
 import random
+from imgaug import augmenters as iaa
+array = ["apple","banana","cheese","egg","fried chicken","green apple","noodles","rice","sausage"]
+
+def gausian_blur(image,name,path):
+    image = cv2.GaussianBlur(image,(5,5),cv2.BORDER_DEFAULT)
+    cv2.imwrite(path+"\\"+name+"GausianBLur-.jpg", image)
 # define location
-location = r"C:\Users\johny\OneDrive\Desktop\Fall 2021\Project\dataset\test\rice"
-def main(file_dir, output_path):
+def main(file_dir, final_path):
         for root, _, files in os.walk(file_dir):
             print(root)
         for file in files:
             print(file)
-            if((file.find("hflip")==-1)and(file.find("vflip")==-1)and(file.find("light")==-1)):
-                image = cv2.imread(file_dir+"\\"+file)
-                resize =imutils.resize(image,width=100)
-                image_h = cv2.flip(resize,flipCode=0) #a-xis flip
-                image_v = cv2.flip(resize,flipCode=1)#y-axis flip
-                saturation=150
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            name = file[:len(file)-4]
+            image = cv2.imread(file_dir+"\\"+file)
+            resize =imutils.resize(image,width=112)
+            gausian_blur(resize,name,final_path)
+            image_h = cv2.flip(resize,flipCode=0) #a-xis flip
+            image_v = cv2.flip(resize,flipCode=1)#y-axis flip
+            translater = iaa.Affine(translate_px={"x": -16})
+            image_a = translater.augment_image(resize)
+            scaler = iaa.Affine(scale={"y":(0.8,1.2)})
+            image_s = scaler.augment_image(resize)
 
-                v = image[:, :, 2]
-                v = np.where(v <= 255 + saturation, v - saturation, 255)
-                image[:, :, 2] = v
-
-                image_light = cv2.cvtColor(image, cv2.COLOR_HSV2BGRR)
-                name = file[:len(file)-4]
-                cv2.imwrite(location+"\\"+name+"hflip.jpg",image_h)
-                cv2.imwrite(location+"\\"+name+"vflip.jpg",image_v)
-                cv2.imwrite(location+"\\"+name+"light.jpg",image_light)
-            else:
-                print("augmentation has been done before")
+            #image_light = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+            cv2.imwrite(final_path+"\\"+name+"hflip.jpg", image_h)
+            cv2.imwrite(final_path+"\\"+name+"vflip.jpg", image_v)
+            cv2.imwrite(final_path + "\\" + name + "trans.jpg", image_a)
+            cv2.imwrite(final_path + "\\" + name + "scale.jpg", image_s)
+            #cv2.imwrite(final_path+"\\"+name+"light.jpg", image_light)
 
 
-
-main(location,location)
+if __name__ == '__main__':
+    #for i in array:
+     #   main(r"B:\DATASET\train"+"\\"+i,r"B:\DATASET\train"+"\\"+i)
+    main(r"B:\ji\hi",r"B:\ji\hi")
