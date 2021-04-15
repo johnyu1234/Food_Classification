@@ -3,38 +3,62 @@ import numpy as np
 import cv2
 import imutils
 import random
-from imgaug import augmenters as iaa
-array = ["apple","banana","cheese","egg","fried chicken","green apple","noodles","rice","sausage"]
+array = ["apple","banana","carrots","egg","fried chicken","green apple","noodles","rice","sausage","fried rice","shrimp"]
 
 def gausian_blur(image,name,path):
     image = cv2.GaussianBlur(image,(5,5),cv2.BORDER_DEFAULT)
-    cv2.imwrite(path+"\\"+name+"GausianBLur-.jpg", image)
+    cv2.imwrite(path+"/"+name+"GausianBLur-.jpg", image)
 # define location
 def main(file_dir, final_path):
         for root, _, files in os.walk(file_dir):
             print(root)
         for file in files:
             print(file)
-            name = file[:len(file)-4]
-            image = cv2.imread(file_dir+"\\"+file)
+            if("jpeg" not in file):
+                name = file[:len(file)-4]
+            else:
+                name = file[:len(file)-5]
+            image = cv2.imread(file_dir+"/"+file)
+            print(image)
             resize =imutils.resize(image,width=112)
             gausian_blur(resize,name,final_path)
+            bright = np.ones(resize.shape, dtype="uint8")
+            image_bright = cv2.add(resize,bright)
+            image_dim = cv2.subtract(resize,bright)
             image_h = cv2.flip(resize,flipCode=0) #a-xis flip
             image_v = cv2.flip(resize,flipCode=1)#y-axis flip
-            translater = iaa.Affine(translate_px={"x": -16})
-            image_a = translater.augment_image(resize)
-            scaler = iaa.Affine(scale={"y":(0.8,1.2)})
-            image_s = scaler.augment_image(resize)
+            cv2.imwrite(final_path+"/"+name+"hflip.jpg", image_h)
+            cv2.imwrite(final_path+"/"+name+"vflip.jpg", image_v)
+            cv2.imwrite(final_path + "/" + name + "dim.jpg", image_dim)
+            cv2.imwrite(final_path + "/" + name + "bright.jpg",image_bright)
+def train_test_val_split(file_dir):
+    for root, _, files in os.walk(file_dir):
+        print(os.path.basename(root))
 
-            #image_light = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
-            cv2.imwrite(final_path+"\\"+name+"hflip.jpg", image_h)
-            cv2.imwrite(final_path+"\\"+name+"vflip.jpg", image_v)
-            cv2.imwrite(final_path + "\\" + name + "trans.jpg", image_a)
-            cv2.imwrite(final_path + "\\" + name + "scale.jpg", image_s)
-            #cv2.imwrite(final_path+"\\"+name+"light.jpg", image_light)
+        for file in files :
+            if random.randint(1, 10)<= 2:
+                new_root = root.replace("/train", "test")
+                os.rename(root+"/"+file,new_root+"/"+file)
+            elif 2 < random.randint(1,10) < 4:
+                new_root = root.replace("train", "val")
+                os.rename(root+"/"+file,new_root+"/"+file)
+                print(file)
+def train_test_val_split_online(file_dir):
+    for root, _, files in os.walk(file_dir):
+        print(os.path.basename(root))
+
+        for file in files :
+            if random.randint(1, 10)<= 2:
+                new_root = root.replace("dataset/online", "test")
+                os.rename(root+"/"+file,new_root+"/"+file)
+            elif 2 < random.randint(1,10) < 4:
+                new_root = root.replace("dataset/online", "val")
+                os.rename(root+"/"+file,new_root+"/"+file)
+                print(file)
 
 
 if __name__ == '__main__':
     #for i in array:
-     #   main(r"B:\DATASET\train"+"\\"+i,r"B:\DATASET\train"+"\\"+i)
-    main(r"B:\ji\hi",r"B:\ji\hi")
+    #    main("/Users/johns/Desktop/dataset/dataset/actual/"+i,"/Users/johns/Desktop/dataset/train/"+i)
+    #train_test_val_split("/Users/johns/Desktop/dataset/train")
+    train_test_val_split_online("/Users/johns/Desktop/dataset/dataset/online")
